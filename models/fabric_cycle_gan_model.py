@@ -78,7 +78,7 @@ class FabricCycleGANModel(BaseModel):
 
         input_nc_gb = 4
         output_nc_gb = 3
-        self.netG_B = networks.define_G(opt.output_nc, opt.input_nc, opt.ngf, opt.netG, opt.norm,
+        self.netG_B = networks.define_G(input_nc_gb, output_nc_gb, opt.ngf, opt.netG, opt.norm,
                                         not opt.no_dropout, opt.init_type, opt.init_gain, self.gpu_ids)
 
         if self.isTrain:  # define discriminators
@@ -119,16 +119,15 @@ class FabricCycleGANModel(BaseModel):
         """Run forward pass; called by both functions <optimize_parameters> and <test>."""
         self.fake_B_combine = self.netG_A(self.real_A)  # G_A(A)
         self.fake_B = self.fake_B_combine[:,0:3, :,:]
-        self.fabric_texture = self.fake_B_combine[:,3, :,:]
+        self.fabric_texture = self.fake_B_combine[:,3:, :,:]
 
         self.rec_A = self.netG_B(self.fake_B_combine)   # G_B(G_A(A))
-
         self.real_B_with_fabric_texture = torch.cat((self.real_B, self.fabric_texture), 1)
         self.fake_A = self.netG_B(self.real_B_with_fabric_texture)  # G_B(B)
         self.rec_B_combine = self.netG_A(self.fake_A)   # G_A(G_B(B))
 
         self.rec_B = self.rec_B_combine[:,0:3,:,:]
-        self.fabric_texture_rec = self.rec_B_combine[:,3, :,:]
+        self.fabric_texture_rec = self.rec_B_combine[:,3:, :,:]
 
     def backward_D_basic(self, netD, real, fake):
         """Calculate GAN loss for the discriminator
@@ -172,7 +171,7 @@ class FabricCycleGANModel(BaseModel):
             # G_A should be identity if real_B is fed: ||G_A(B) - B||
             self.idt_A_combine = self.netG_A(self.real_B)
             self.idt_A = self.idt_A_combine[:,0:3, :,:]
-            self.idt_A_texture = self.idt_A_combine[:,3, :,:]
+            self.idt_A_texture = self.idt_A_combine[:,3:, :,:]
             self.loss_idt_A = self.criterionIdt(self.idt_A, self.real_B) * lambda_B * lambda_idt \
                               + self.criterionGAN(self.idt_A_texture, False)* lambda_B * lambda_idt
             # G_B should be identity if real_A is fed: ||G_B(A) - A||

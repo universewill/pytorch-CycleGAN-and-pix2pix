@@ -87,6 +87,8 @@ def get_transform(opt, params=None, grayscale=False, method=Image.BICUBIC, conve
         transform_list.append(transforms.Resize(osize, method))
     elif 'scale_width' in opt.preprocess:
         transform_list.append(transforms.Lambda(lambda img: __scale_width(img, opt.load_size, opt.crop_size, method)))
+    elif 'rand_width' in opt.preprocess:
+        transform_list.append(transforms.Lambda(lambda img: __rand_width(img, ratio=[0.4, 1.0], crop_size=opt.crop_size)))
 
     if 'crop' in opt.preprocess:
         if params is None:
@@ -130,6 +132,14 @@ def __scale_width(img, target_size, crop_size, method=Image.BICUBIC):
     w = target_size
     h = int(max(target_size * oh / ow, crop_size))
     return img.resize((w, h), method)
+
+
+def __rand_width(img, ratio=[0.4, 1.0], crop_size=256.0, method=Image.BICUBIC):
+    ow, oh = img.size
+    ratio = random.uniform(ratio[0], ratio[1])
+    ratio = max(ratio, float(crop_size)/ow, float(crop_size)/oh)
+    new_w, new_h = int(ratio*ow), int(ratio*oh)
+    return img.resize((new_w, new_h), method)
 
 
 def __crop(img, pos, size):
