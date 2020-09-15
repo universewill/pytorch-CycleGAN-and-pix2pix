@@ -158,6 +158,11 @@ class Visualizer():
             # save images to the disk
             for label, image in visuals.items():
                 image_numpy = util.tensor2im(image)
+                if label == 'fake_B':
+                    print('fake_B shape:', image_numpy.shape)
+                    image_numpy = image_numpy[:,:,:3]
+                    print('fake_B image shape:', image_numpy.shape)
+
                 img_path = os.path.join(self.img_dir, 'epoch%.3d_%s.png' % (epoch, label))
                 util.save_image(image_numpy, img_path)
 
